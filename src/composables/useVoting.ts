@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ref, computed } from 'vue'
 import * as contractAPI from '../api/contract'
 import * as metamaskAPI from '../api/metamask'
 import { useNotifications } from './useNotifications'
+import type { Web3Error } from '../types/web3'
 
 // Types
 export interface Candidate {
@@ -82,17 +82,18 @@ const connect = async () => {
     isConnected.value = true
 
     // Initialize contract
-    contractAPI.initializeContract(window.ethereum)
+    contractAPI.initializeContract(window.ethereum!)
 
     // Load initial data
     await Promise.all([loadContractInfo(), loadVoterInfo(), loadCandidates(), loadAdminInfo()])
 
     console.log('Đã kết nối tới MetaMask:', currentAccount.value)
-    success('Connected Successfully', 'MetaMask wallet connected')
-  } catch (err: any) {
-    error.value = err.message
-    showError('Connection Failed', err.message)
-    console.error('Connection error:', err)
+    success('Kết nối thành công', 'Ví MetaMask đã được kết nối')
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    error.value = web3Error.message
+    showError('Kết nối thất bại', web3Error.message)
+    console.error('Connection error:', web3Error)
   } finally {
     isLoading.value = false
   }
@@ -125,10 +126,11 @@ const disconnect = () => {
 const loadContractInfo = async () => {
   try {
     contractInfo.value = await contractAPI.getContractInfo()
-  } catch (err: any) {
-    console.error('Error loading contract info:', err)
-    error.value = 'Failed to load contract information'
-    showError('Contract Error', 'Failed to load contract information')
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Error loading contract info:', web3Error)
+    error.value = 'Không thể tải thông tin Contract'
+    showError('Lỗi Contract', 'Không thể tải thông tin Contract')
   }
 }
 
@@ -136,8 +138,9 @@ const loadAdminInfo = async () => {
   try {
     adminAddress.value = await contractAPI.getAdmin()
     isAdmin.value = true
-  } catch (err: any) {
-    console.error('Error loading admin info:', err)
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Error loading admin info:', web3Error)
     isAdmin.value = false
   }
 }
@@ -147,20 +150,22 @@ const loadVoterInfo = async () => {
 
   try {
     voterInfo.value = await contractAPI.getVoterInfo(currentAccount.value)
-  } catch (err: any) {
-    console.error('Error loading voter info:', err)
-    error.value = 'Failed to load voter information'
-    showError('Voter Error', 'Failed to load voter information')
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Error loading voter info:', web3Error)
+    error.value = 'Không thể tải thông tin cử tri'
+    showError('Lỗi cử tri', 'Không thể tải thông tin cử tri')
   }
 }
 
 const loadCandidates = async () => {
   try {
     candidates.value = await contractAPI.getAllCandidates()
-  } catch (err: any) {
-    console.error('Error loading candidates:', err)
-    error.value = 'Failed to load candidates'
-    showError('Candidates Error', 'Failed to load candidates')
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Error loading candidates:', web3Error)
+    error.value = 'Không thể tải danh sách ứng viên'
+    showError('Lỗi ứng viên', 'Không thể tải danh sách ứng viên')
   }
 }
 
@@ -173,15 +178,16 @@ const castVote = async (candidateId: number) => {
 
     const result = await contractAPI.vote(candidateId, currentAccount.value)
 
-    result.on('VoteCast', () => {
-      success('Vote Cast', 'Your vote has been recorded successfully')
+    if (result.status) {
+      success('Đã bỏ phiếu', 'Phiếu bầu của bạn đã được ghi nhận thành công')
       Promise.all([loadCandidates(), loadVoterInfo(), loadContractInfo()])
       return
-    })
-
-    showError('Lỗi bỏ phiếu', 'Không thể bỏ phiếu. Vui lòng kiểm tra lại.')
-  } catch (err: any) {
-    console.error('Lỗi bỏ phiếu:', err)
+    } else {
+      showError('Lỗi bỏ phiếu', 'Không thể bỏ phiếu. Vui lòng kiểm tra lại.')
+    }
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Lỗi bỏ phiếu:', web3Error)
     error.value = 'Không thể bỏ phiếu. Vui lòng kiểm tra lại.'
     showError('Lỗi bỏ phiếu', error.value)
   } finally {
@@ -198,17 +204,18 @@ const revokeVote = async (candidateId: number) => {
 
     const result = await contractAPI.revokeVote(candidateId, currentAccount.value)
 
-    result.on('VoteRevoked', () => {
-      success('Vote Revoked', 'Your vote has been revoked successfully')
+    if (result.status) {
+      success('Đã hủy phiếu', 'Phiếu bầu của bạn đã được hủy thành công')
       Promise.all([loadCandidates(), loadVoterInfo(), loadContractInfo()])
       return
-    })
-
-    showError('Lỗi hủy phiếu', 'Không thể hủy phiếu. Vui lòng kiểm tra lại.')
-  } catch (err: any) {
-    console.error('Error revoking vote:', err)
+    } else {
+      showError('Lỗi hủy phiếu', 'Không thể hủy phiếu. Vui lòng kiểm tra lại.')
+    }
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Error revoking vote:', web3Error)
     error.value = 'Không thể hủy bỏ phiếu.'
-    showError('Revoke Failed', 'Failed to revoke vote.')
+    showError('Hủy phiếu thất bại', 'Không thể hủy bỏ phiếu.')
   } finally {
     isLoading.value = false
   }
@@ -217,11 +224,15 @@ const revokeVote = async (candidateId: number) => {
 const getWinner = async () => {
   try {
     winner.value = await contractAPI.getWinner()
-    success('Winner Retrieved', 'Election winner information loaded')
-  } catch (err: any) {
-    console.error('Error getting winner:', err)
-    error.value = 'Failed to get winner. The election might still be ongoing.'
-    showError('Winner Error', 'Failed to get winner. The election might still be ongoing.')
+    success('Đã lấy kết quả', 'Thông tin người thắng cuộc bầu cử đã được tải')
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Error getting winner:', web3Error)
+    error.value = 'Không thể lấy kết quả người thắng. Cuộc bầu cử có thể vẫn đang diễn ra.'
+    showError(
+      'Lỗi kết quả',
+      'Không thể lấy kết quả người thắng. Cuộc bầu cử có thể vẫn đang diễn ra.',
+    )
   }
 }
 
@@ -234,20 +245,20 @@ const addCandidate = async (name: string) => {
 
     const result = await contractAPI.addCandidate(name, currentAccount.value)
 
-    // Wait for transaction confirmation
-    const receipt = await result.waitForTransactionReceipt()
-
-    // Check if transaction was successful
-    if (isTransactionSuccessful(receipt)) {
-      success('Candidate Added', `Candidate "${name}" has been added successfully`)
+    if (result.status) {
+      success('Đã thêm ứng viên', `Ứng viên "${name}" đã được thêm thành công`)
       await loadCandidates()
     } else {
-      showError('Add Candidate Failed', 'Transaction was reverted. Please try again.')
+      showError('Thêm ứng viên thất bại', 'Giao dịch đã bị hoàn trả. Vui lòng thử lại.')
     }
-  } catch (err: any) {
-    console.error('Error adding candidate:', err)
-    error.value = 'Failed to add candidate. Make sure you are the admin.'
-    showError('Add Candidate Failed', 'Failed to add candidate. Make sure you are the admin.')
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Error adding candidate:', web3Error)
+    error.value = 'Không thể thêm ứng viên. Hãy đảm bảo bạn là quản trị viên.'
+    showError(
+      'Thêm ứng viên thất bại',
+      'Không thể thêm ứng viên. Hãy đảm bảo bạn là quản trị viên.',
+    )
   } finally {
     isLoading.value = false
   }
@@ -262,20 +273,17 @@ const authorizeVoter = async (voterAddress: string) => {
 
     const result = await contractAPI.authorizeVoter(voterAddress, currentAccount.value)
 
-    // Wait for transaction confirmation
-    const receipt = await result.waitForTransactionReceipt()
-
-    // Check if transaction was successful
-    if (isTransactionSuccessful(receipt)) {
-      success('Voter Authorized', `Voter ${voterAddress.slice(0, 10)}... has been authorized`)
+    if (result.status) {
+      success('Đã ủy quyền cử tri', `Cử tri ${voterAddress.slice(0, 10)}... đã được ủy quyền`)
       await loadVoterInfo()
     } else {
-      showError('Authorization Failed', 'Transaction was reverted. Please try again.')
+      showError('Ủy quyền thất bại', 'Giao dịch đã bị hoàn trả. Vui lòng thử lại.')
     }
-  } catch (err: any) {
-    console.error('Error authorizing voter:', err)
-    error.value = 'Failed to authorize voter. Make sure you are the admin.'
-    showError('Authorization Failed', 'Failed to authorize voter. Make sure you are the admin.')
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Error authorizing voter:', web3Error)
+    error.value = 'Không thể ủy quyền cử tri. Hãy đảm bảo bạn là quản trị viên.'
+    showError('Ủy quyền thất bại', 'Không thể ủy quyền cử tri. Hãy đảm bảo bạn là quản trị viên.')
   } finally {
     isLoading.value = false
   }
@@ -290,20 +298,18 @@ const endElection = async () => {
 
     const result = await contractAPI.endElection(currentAccount.value)
 
-    // Wait for transaction confirmation
-    const receipt = await result.waitForTransactionReceipt()
-
-    // Check if transaction was successful
-    if (isTransactionSuccessful(receipt)) {
-      success('Election Ended', 'The election has been ended successfully')
+    if (result.status) {
+      success('Đã kết thúc bầu cử', 'Cuộc bầu cử đã được kết thúc thành công')
       await loadContractInfo()
-    } else {
-      showError('End Election Failed', 'Transaction was reverted. Please try again.')
     }
-  } catch (err: any) {
-    console.error('Error ending election:', err)
-    error.value = 'Failed to end election. Make sure you are the admin.'
-    showError('End Election Failed', 'Failed to end election. Make sure you are the admin.')
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Error ending election:', web3Error)
+    error.value = 'Không thể kết thúc cuộc bầu cử. Hãy đảm bảo bạn là quản trị viên.'
+    showError(
+      'Kết thúc bầu cử thất bại',
+      'Không thể kết thúc cuộc bầu cử. Hãy đảm bảo bạn là quản trị viên.',
+    )
   } finally {
     isLoading.value = false
   }
@@ -318,35 +324,26 @@ const restartElection = async () => {
 
     const result = await contractAPI.restartElection(currentAccount.value)
 
-    // Wait for transaction confirmation
-    const receipt = await result.waitForTransactionReceipt()
-
-    // Check if transaction was successful
-    if (isTransactionSuccessful(receipt)) {
-      success('Election Restarted', 'The election has been restarted successfully')
+    if (result.status) {
+      success('Đã khởi động lại bầu cử', 'Cuộc bầu cử đã được khởi động lại thành công')
       await Promise.all([loadContractInfo(), loadCandidates()])
-      winner.value = null
-    } else {
-      showError('Restart Election Failed', 'Transaction was reverted. Please try again.')
     }
-  } catch (err: any) {
-    console.error('Error restarting election:', err)
-    error.value = 'Failed to restart election. Make sure you are the admin.'
-    showError('Restart Election Failed', 'Failed to restart election. Make sure you are the admin.')
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Error restarting election:', web3Error)
+    error.value = 'Không thể khởi động lại cuộc bầu cử. Hãy đảm bảo bạn là quản trị viên.'
+    showError(
+      'Khởi động lại bầu cử thất bại',
+      'Không thể khởi động lại cuộc bầu cử. Hãy đảm bảo bạn là quản trị viên.',
+    )
   } finally {
     isLoading.value = false
   }
 }
 
 const formatTime = (timestamp: number) => {
-  if (!timestamp) return 'Not set'
-  return new Date(timestamp * 1000).toLocaleString()
-}
-
-// Helper function to check if transaction was successful
-const isTransactionSuccessful = (receipt: any) => {
-  // Different Web3 versions return status differently
-  return receipt.status === 1 || receipt.status === true || receipt.status === '0x1'
+  if (!timestamp) return 'Chưa thiết lập'
+  return new Date(timestamp * 1000).toLocaleString('vi-VN')
 }
 
 // Setup listeners

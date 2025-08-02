@@ -108,7 +108,7 @@ const transactionPending = (txHash: string, title: string) => {
   return addNotification({
     type: 'info',
     title,
-    message: `Transaction ${txHash.slice(0, 10)}... is pending`,
+    message: `Giao dịch ${txHash.slice(0, 10)}... đang chờ xử lý`,
     persistent: true,
   })
 }
@@ -118,7 +118,7 @@ const transactionSuccess = (txHash: string, title: string) => {
   return addNotification({
     type: 'success',
     title,
-    message: `Transaction ${txHash.slice(0, 10)}... completed successfully`,
+    message: `Giao dịch ${txHash.slice(0, 10)}... đã hoàn thành thành công`,
   })
 }
 
@@ -127,7 +127,7 @@ const transactionError = (txHash: string, title: string, errorMessage?: string) 
   return addNotification({
     type: 'error',
     title,
-    message: errorMessage || `Transaction ${txHash.slice(0, 10)}... failed`,
+    message: errorMessage || `Giao dịch ${txHash.slice(0, 10)}... thất bại`,
     persistent: true,
   })
 }

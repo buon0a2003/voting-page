@@ -2,6 +2,7 @@
 import Web3 from 'web3'
 import contractMetadata from '../../VotingSystem_metadata.json'
 import { CONTRACT_CONFIG } from '../config/contract'
+import type { EthereumProvider, TransactionOptions } from '../types/web3'
 
 // Contract ABI from metadata file
 const contractABI = contractMetadata.output.abi
@@ -11,7 +12,7 @@ let contract: any = null
 let web3: Web3 | null = null
 
 // Initialize contract
-export const initializeContract = (provider: any) => {
+export const initializeContract = (provider: EthereumProvider) => {
   web3 = new Web3(provider)
   contract = new web3.eth.Contract(contractABI, CONTRACT_CONFIG.ADDRESS)
   return { web3, contract }
@@ -22,7 +23,7 @@ export const getContract = () => contract
 export const getWeb3 = () => web3
 
 // Get admin address
-export const getAdmin = async () => {
+export const getAdmin = async (): Promise<string> => {
   if (!contract) throw new Error('Contract not initialized')
 
   return await contract.methods.admin().call()
@@ -85,47 +86,59 @@ export const getWinner = async () => {
 export const vote = async (candidateId: number, fromAddress: string) => {
   if (!contract) throw new Error('Contract not initialized')
 
-  return await contract.methods.vote(candidateId).send({
+  const options: TransactionOptions = {
     from: fromAddress,
-  })
+  }
+
+  return await contract.methods.vote(candidateId).send(options)
 }
 
 export const revokeVote = async (candidateId: number, fromAddress: string) => {
   if (!contract) throw new Error('Contract not initialized')
 
-  return await contract.methods.revokeVote(candidateId).send({
+  const options: TransactionOptions = {
     from: fromAddress,
-  })
+  }
+
+  return await contract.methods.revokeVote(candidateId).send(options)
 }
 
 export const addCandidate = async (name: string, fromAddress: string) => {
   if (!contract) throw new Error('Contract not initialized')
 
-  return await contract.methods.addCandidate(name).send({
+  const options: TransactionOptions = {
     from: fromAddress,
-  })
+  }
+
+  return await contract.methods.addCandidate(name).send(options)
 }
 
 export const authorizeVoter = async (voterAddress: string, fromAddress: string) => {
   if (!contract) throw new Error('Contract not initialized')
 
-  return await contract.methods.authorize(voterAddress).send({
+  const options: TransactionOptions = {
     from: fromAddress,
-  })
+  }
+
+  return await contract.methods.authorize(voterAddress).send(options)
 }
 
 export const endElection = async (fromAddress: string) => {
   if (!contract) throw new Error('Contract not initialized')
 
-  return await contract.methods.end().send({
+  const options: TransactionOptions = {
     from: fromAddress,
-  })
+  }
+
+  return await contract.methods.end().send(options)
 }
 
 export const restartElection = async (fromAddress: string) => {
   if (!contract) throw new Error('Contract not initialized')
 
-  return await contract.methods.restart().send({
+  const options: TransactionOptions = {
     from: fromAddress,
-  })
+  }
+
+  return await contract.methods.restart().send(options)
 }

@@ -6,7 +6,7 @@
     <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
       <div class="navbar-brand">
         <a class="navbar-item" href="#">
-          <strong class="has-text-white">Voting App</strong>
+          <strong class="has-text-white">Ứng Dụng Bỏ Phiếu</strong>
         </a>
       </div>
 
@@ -17,7 +17,7 @@
               <span v-if="isLoading" class="icon is-small mr-2">
                 <i class="fas fa-spinner fa-spin"></i>
               </span>
-              {{ isLoading ? 'Connecting...' : 'Connect MetaMask' }}
+              {{ isLoading ? 'Đang kết nối...' : 'Kết nối MetaMask' }}
             </button>
           </div>
           <div v-else class="buttons">
@@ -27,7 +27,7 @@
                 <i class="fas fa-crown has-text-warning"></i>
               </span>
             </span>
-            <button class="button is-danger is-small" @click="disconnect">Disconnect</button>
+            <button class="button is-danger is-small" @click="disconnect">Ngắt kết nối</button>
           </div>
         </div>
       </div>
@@ -36,7 +36,7 @@
     <div class="container mt-4">
       <!-- Connection Status -->
       <div v-if="!isConnected" class="notification is-info">
-        <p>Please connect your MetaMask wallet to interact with the voting contract.</p>
+        <p>Vui lòng kết nối ví MetaMask của bạn để tương tác với Contract bỏ phiếu.</p>
       </div>
 
       <!-- Contract Information -->
@@ -44,21 +44,22 @@
         <div class="column is-8">
           <div class="card">
             <header class="card-header">
-              <p class="card-header-title">Contract Information</p>
+              <p class="card-header-title">Thông Tin Contract</p>
             </header>
             <div class="card-content">
               <div class="content">
                 <p>
-                  <strong>Election Name:</strong> {{ contractInfo.electionName || 'Loading...' }}
+                  <strong>Tên Cuộc Bầu Cử:</strong> {{ contractInfo.electionName || 'Đang tải...' }}
                 </p>
-                <p><strong>Start Time:</strong> {{ formatTime(contractInfo.startTime) }}</p>
-                <p><strong>End Time:</strong> {{ formatTime(contractInfo.endTime) }}</p>
-                <p><strong>Total Votes:</strong> {{ contractInfo.totalVotes || 0 }}</p>
+                <p><strong>Thời Gian Bắt Đầu:</strong> {{ formatTime(contractInfo.startTime) }}</p>
+                <p><strong>Thời Gian Kết Thúc:</strong> {{ formatTime(contractInfo.endTime) }}</p>
+                <p><strong>Tổng Số Phiếu:</strong> {{ contractInfo.totalVotes || 0 }}</p>
                 <p>
-                  <strong>Max Votes Per Voter:</strong> {{ contractInfo.maxVotesPerVoter || 0 }}
+                  <strong>Số Phiếu Tối Đa Mỗi Cử Tri:</strong>
+                  {{ contractInfo.maxVotesPerVoter || 0 }}
                 </p>
-                <p><strong>Is Authorized:</strong> {{ voterInfo.authorized ? 'Yes' : 'No' }}</p>
-                <p><strong>Votes Cast:</strong> {{ voterInfo.votesCast || 0 }}</p>
+                <p><strong>Được Ủy Quyền:</strong> {{ voterInfo.authorized ? 'Có' : 'Không' }}</p>
+                <p><strong>Số Phiếu Đã Bỏ:</strong> {{ voterInfo.votesCast || 0 }}</p>
               </div>
             </div>
           </div>
@@ -66,26 +67,26 @@
           <!-- Candidates Section -->
           <div class="card mt-4">
             <header class="card-header">
-              <p class="card-header-title">Candidates</p>
+              <p class="card-header-title">Ứng Viên</p>
               <button
                 class="button is-primary is-small mr-3 mt-3"
                 @click="loadCandidates"
                 :disabled="isLoading"
               >
-                Refresh
+                Làm mới
               </button>
             </header>
             <div class="card-content">
               <div v-if="candidates.length === 0" class="content">
-                <p>No candidates found. Add some candidates to get started.</p>
+                <p>Không tìm thấy ứng viên nào. Hãy thêm một số ứng viên để bắt đầu.</p>
               </div>
               <div v-else class="content">
                 <div v-for="candidate in candidates" :key="candidate.id" class="box">
                   <div class="columns is-vcentered">
                     <div class="column">
                       <p><strong>ID:</strong> {{ candidate.id }}</p>
-                      <p><strong>Name:</strong> {{ candidate.name }}</p>
-                      <p><strong>Votes:</strong> {{ candidate.voteCount }}</p>
+                      <p><strong>Tên:</strong> {{ candidate.name }}</p>
+                      <p><strong>Số phiếu:</strong> {{ candidate.voteCount }}</p>
                     </div>
                     <div class="column is-narrow">
                       <button
@@ -96,7 +97,7 @@
                         <span v-if="isLoading" class="icon is-small mr-1">
                           <i class="fas fa-spinner fa-spin"></i>
                         </span>
-                        Vote
+                        Bỏ phiếu
                       </button>
                       <button
                         class="button is-warning ml-2"
@@ -106,7 +107,7 @@
                         <span v-if="isLoading" class="icon is-small mr-1">
                           <i class="fas fa-spinner fa-spin"></i>
                         </span>
-                        Revoke
+                        Hủy phiếu
                       </button>
                     </div>
                   </div>
@@ -118,23 +119,23 @@
           <!-- Winner Section -->
           <div class="card mt-4">
             <header class="card-header">
-              <p class="card-header-title">Winner</p>
+              <p class="card-header-title">Người Thắng Cuộc</p>
               <button
                 class="button is-info is-small mr-3 mt-3"
                 @click="getWinner"
                 :disabled="isLoading"
               >
-                Get Winner
+                Lấy Kết Quả
               </button>
             </header>
             <div class="card-content">
               <div v-if="winner" class="content">
-                <p><strong>Winner ID:</strong> {{ winner.winnerId }}</p>
-                <p><strong>Winner Name:</strong> {{ winner.winnerName }}</p>
-                <p><strong>Winner Votes:</strong> {{ winner.winnerVotes }}</p>
+                <p><strong>ID Người Thắng:</strong> {{ winner.winnerId }}</p>
+                <p><strong>Tên Người Thắng:</strong> {{ winner.winnerName }}</p>
+                <p><strong>Số Phiếu Thắng:</strong> {{ winner.winnerVotes }}</p>
               </div>
               <div v-else class="content">
-                <p>No winner determined yet or election is still ongoing.</p>
+                <p>Chưa xác định người thắng hoặc cuộc bầu cử vẫn đang diễn ra.</p>
               </div>
             </div>
           </div>
@@ -148,19 +149,19 @@
                 <span class="icon is-small mr-2">
                   <i class="fas fa-crown"></i>
                 </span>
-                Admin Functions
+                Chức Năng Quản Trị
               </p>
             </header>
             <div class="card-content">
               <div class="content">
                 <!-- Add Candidate -->
                 <div class="field">
-                  <label class="label">Add Candidate</label>
+                  <label class="label">Thêm Ứng Viên</label>
                   <div class="control">
                     <input
                       class="input"
                       v-model="newCandidateName"
-                      placeholder="Candidate name"
+                      placeholder="Tên ứng viên"
                       @keyup.enter="handleAddCandidate"
                       :disabled="isLoading"
                     />
@@ -173,7 +174,7 @@
                     <span v-if="isLoading" class="icon is-small mr-1">
                       <i class="fas fa-spinner fa-spin"></i>
                     </span>
-                    Add Candidate
+                    Thêm Ứng Viên
                   </button>
                 </div>
 
@@ -181,12 +182,12 @@
 
                 <!-- Authorize Voter -->
                 <div class="field">
-                  <label class="label">Authorize Voter</label>
+                  <label class="label">Ủy Quyền Cử Tri</label>
                   <div class="control">
                     <input
                       class="input"
                       v-model="voterAddress"
-                      placeholder="Voter address"
+                      placeholder="Địa chỉ cử tri"
                       @keyup.enter="handleAuthorizeVoter"
                       :disabled="isLoading"
                     />
@@ -199,7 +200,7 @@
                     <span v-if="isLoading" class="icon is-small mr-1">
                       <i class="fas fa-spinner fa-spin"></i>
                     </span>
-                    Authorize
+                    Ủy Quyền
                   </button>
                 </div>
 
@@ -210,7 +211,7 @@
                   <span v-if="isLoading" class="icon is-small mr-1">
                     <i class="fas fa-spinner fa-spin"></i>
                   </span>
-                  End Election
+                  Kết Thúc Bầu Cử
                 </button>
 
                 <hr />
@@ -220,7 +221,7 @@
                   <span v-if="isLoading" class="icon is-small mr-1">
                     <i class="fas fa-spinner fa-spin"></i>
                   </span>
-                  Restart Election
+                  Khởi Động Lại Bầu Cử
                 </button>
               </div>
             </div>
@@ -235,23 +236,23 @@
                 <span class="icon is-small mr-2">
                   <i class="fas fa-user"></i>
                 </span>
-                Voter Functions
+                Chức Năng Cử Tri
               </p>
             </header>
             <div class="card-content">
               <div class="content">
                 <div class="notification is-info is-light">
-                  <p><strong>Voter Account</strong></p>
+                  <p><strong>Tài Khoản Cử Tri</strong></p>
                   <p>
-                    You are connected as a voter. Only the contract admin can perform administrative
-                    functions.
+                    Bạn đã kết nối với tư cách cử tri. Chỉ quản trị viên Contract mới có thể thực
+                    hiện các chức năng quản trị.
                   </p>
                   <p class="is-size-7 mt-2">
-                    <strong>Admin Address:</strong>
+                    <strong>Địa Chỉ Quản Trị:</strong>
                     {{
                       adminAddress
                         ? `${adminAddress.slice(0, 6)}...${adminAddress.slice(-4)}`
-                        : 'Loading...'
+                        : 'Đang tải...'
                     }}
                   </p>
                 </div>

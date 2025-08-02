@@ -27,7 +27,7 @@
             <button
               class="delete"
               @click="removeNotification(notification.id)"
-              :aria-label="`Close ${notification.title} notification`"
+              :aria-label="`Đóng thông báo ${notification.title}`"
             ></button>
           </div>
         </div>
