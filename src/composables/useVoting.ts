@@ -53,15 +53,7 @@ const isAdmin = ref(false)
 const adminAddress = ref('')
 
 // Initialize notifications
-const {
-  success,
-  error: showError,
-  info,
-  warning,
-  transactionPending,
-  transactionSuccess,
-  transactionError,
-} = useNotifications()
+const { success, error: showError, info, warning } = useNotifications()
 
 // Computed properties
 const shortAddress = computed(() => {
@@ -181,25 +173,17 @@ const castVote = async (candidateId: number) => {
 
     const result = await contractAPI.vote(candidateId, currentAccount.value)
 
-    // Show pending notification
-    const pendingId = transactionPending(result.transactionHash, 'Vote Cast')
+    result.on('VoteCast', () => {
+      success('Vote Cast', 'Your vote has been recorded successfully')
+      Promise.all([loadCandidates(), loadVoterInfo(), loadContractInfo()])
+      return
+    })
 
-    // Wait for transaction confirmation
-    await result.wait()
-
-    // Show success notification
-    transactionSuccess(result.transactionHash, 'Vote Cast Successfully')
-    success('Vote Cast', 'Your vote has been recorded successfully')
-
-    // Refresh data
-    await Promise.all([loadCandidates(), loadVoterInfo(), loadContractInfo()])
+    showError('Lỗi bỏ phiếu', 'Không thể bỏ phiếu. Vui lòng kiểm tra lại.')
   } catch (err: any) {
     console.error('Lỗi bỏ phiếu:', err)
     error.value = 'Không thể bỏ phiếu. Vui lòng kiểm tra lại.'
-    showError(
-      'Vote Failed',
-      'Failed to cast vote. Please check if you are authorized and have not exceeded your vote limit.',
-    )
+    showError('Lỗi bỏ phiếu', error.value)
   } finally {
     isLoading.value = false
   }
@@ -214,18 +198,13 @@ const revokeVote = async (candidateId: number) => {
 
     const result = await contractAPI.revokeVote(candidateId, currentAccount.value)
 
-    // Show pending notification
-    const pendingId = transactionPending(result.transactionHash, 'Vote Revoked')
+    result.on('VoteRevoked', () => {
+      success('Vote Revoked', 'Your vote has been revoked successfully')
+      Promise.all([loadCandidates(), loadVoterInfo(), loadContractInfo()])
+      return
+    })
 
-    // Wait for transaction confirmation
-    await result.wait()
-
-    // Show success notification
-    transactionSuccess(result.transactionHash, 'Vote Revoked Successfully')
-    success('Vote Revoked', 'Your vote has been revoked successfully')
-
-    // Refresh data
-    await Promise.all([loadCandidates(), loadVoterInfo(), loadContractInfo()])
+    showError('Lỗi hủy phiếu', 'Không thể hủy phiếu. Vui lòng kiểm tra lại.')
   } catch (err: any) {
     console.error('Error revoking vote:', err)
     error.value = 'Không thể hủy bỏ phiếu.'
@@ -255,17 +234,16 @@ const addCandidate = async (name: string) => {
 
     const result = await contractAPI.addCandidate(name, currentAccount.value)
 
-    // Show pending notification
-    const pendingId = transactionPending(result.transactionHash, 'Adding Candidate')
-
     // Wait for transaction confirmation
-    await result.wait()
+    const receipt = await result.waitForTransactionReceipt()
 
-    // Show success notification
-    transactionSuccess(result.transactionHash, 'Candidate Added Successfully')
-    success('Candidate Added', `Candidate "${name}" has been added successfully`)
-
-    await loadCandidates()
+    // Check if transaction was successful
+    if (isTransactionSuccessful(receipt)) {
+      success('Candidate Added', `Candidate "${name}" has been added successfully`)
+      await loadCandidates()
+    } else {
+      showError('Add Candidate Failed', 'Transaction was reverted. Please try again.')
+    }
   } catch (err: any) {
     console.error('Error adding candidate:', err)
     error.value = 'Failed to add candidate. Make sure you are the admin.'
@@ -284,17 +262,16 @@ const authorizeVoter = async (voterAddress: string) => {
 
     const result = await contractAPI.authorizeVoter(voterAddress, currentAccount.value)
 
-    // Show pending notification
-    const pendingId = transactionPending(result.transactionHash, 'Authorizing Voter')
-
     // Wait for transaction confirmation
-    await result.wait()
+    const receipt = await result.waitForTransactionReceipt()
 
-    // Show success notification
-    transactionSuccess(result.transactionHash, 'Voter Authorized Successfully')
-    success('Voter Authorized', `Voter ${voterAddress.slice(0, 10)}... has been authorized`)
-
-    await loadVoterInfo()
+    // Check if transaction was successful
+    if (isTransactionSuccessful(receipt)) {
+      success('Voter Authorized', `Voter ${voterAddress.slice(0, 10)}... has been authorized`)
+      await loadVoterInfo()
+    } else {
+      showError('Authorization Failed', 'Transaction was reverted. Please try again.')
+    }
   } catch (err: any) {
     console.error('Error authorizing voter:', err)
     error.value = 'Failed to authorize voter. Make sure you are the admin.'
@@ -313,17 +290,16 @@ const endElection = async () => {
 
     const result = await contractAPI.endElection(currentAccount.value)
 
-    // Show pending notification
-    const pendingId = transactionPending(result.transactionHash, 'Ending Election')
-
     // Wait for transaction confirmation
-    await result.wait()
+    const receipt = await result.waitForTransactionReceipt()
 
-    // Show success notification
-    transactionSuccess(result.transactionHash, 'Election Ended Successfully')
-    success('Election Ended', 'The election has been ended successfully')
-
-    await loadContractInfo()
+    // Check if transaction was successful
+    if (isTransactionSuccessful(receipt)) {
+      success('Election Ended', 'The election has been ended successfully')
+      await loadContractInfo()
+    } else {
+      showError('End Election Failed', 'Transaction was reverted. Please try again.')
+    }
   } catch (err: any) {
     console.error('Error ending election:', err)
     error.value = 'Failed to end election. Make sure you are the admin.'
@@ -342,18 +318,17 @@ const restartElection = async () => {
 
     const result = await contractAPI.restartElection(currentAccount.value)
 
-    // Show pending notification
-    const pendingId = transactionPending(result.transactionHash, 'Restarting Election')
-
     // Wait for transaction confirmation
-    await result.wait()
+    const receipt = await result.waitForTransactionReceipt()
 
-    // Show success notification
-    transactionSuccess(result.transactionHash, 'Election Restarted Successfully')
-    success('Election Restarted', 'The election has been restarted successfully')
-
-    await Promise.all([loadContractInfo(), loadCandidates()])
-    winner.value = null
+    // Check if transaction was successful
+    if (isTransactionSuccessful(receipt)) {
+      success('Election Restarted', 'The election has been restarted successfully')
+      await Promise.all([loadContractInfo(), loadCandidates()])
+      winner.value = null
+    } else {
+      showError('Restart Election Failed', 'Transaction was reverted. Please try again.')
+    }
   } catch (err: any) {
     console.error('Error restarting election:', err)
     error.value = 'Failed to restart election. Make sure you are the admin.'
@@ -366,6 +341,12 @@ const restartElection = async () => {
 const formatTime = (timestamp: number) => {
   if (!timestamp) return 'Not set'
   return new Date(timestamp * 1000).toLocaleString()
+}
+
+// Helper function to check if transaction was successful
+const isTransactionSuccessful = (receipt: any) => {
+  // Different Web3 versions return status differently
+  return receipt.status === 1 || receipt.status === true || receipt.status === '0x1'
 }
 
 // Setup listeners

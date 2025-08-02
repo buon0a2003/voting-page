@@ -1,23 +1,5 @@
 <template>
   <div class="notification-center">
-    <div v-if="getPendingCount() > 0" class="pending-indicator">
-      <div class="notification is-info is-light">
-        <div class="columns is-vcentered is-mobile">
-          <div class="column">
-            <p class="has-text-weight-semibold">
-              <span class="icon is-small mr-2">
-                <i class="fas fa-spinner fa-spin"></i>
-              </span>
-              {{ getPendingCount() }} transaction{{ getPendingCount() > 1 ? 's' : '' }} pending
-            </p>
-          </div>
-          <div class="column is-narrow">
-            <button class="delete is-small" @click="clearNotifications"></button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Notifications -->
     <TransitionGroup name="notification" tag="div" class="notifications-list">
       <div
@@ -57,8 +39,7 @@
 <script setup lang="ts">
 import { useNotifications } from '../composables/useNotifications'
 
-const { notifications, removeNotification, clearNotifications, getPendingCount } =
-  useNotifications()
+const { notifications, removeNotification } = useNotifications()
 
 const getNotificationClass = (type: string) => {
   switch (type) {
@@ -83,10 +64,6 @@ const getNotificationClass = (type: string) => {
   z-index: 1000;
   max-width: 400px;
   width: 100%;
-}
-
-.pending-indicator {
-  margin-bottom: 10px;
 }
 
 .notifications-list {
