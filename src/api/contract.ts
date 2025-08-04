@@ -7,7 +7,6 @@ import type { EthereumProvider, TransactionOptions } from '../types/web3'
 // Contract ABI from metadata file
 const contractABI = contractMetadata.output.abi
 
-// Contract instance
 let contract: any = null
 let web3: Web3 | null = null
 
@@ -33,13 +32,15 @@ export const getAdmin = async (): Promise<string> => {
 export const getContractInfo = async () => {
   if (!contract) throw new Error('Contract not initialized')
 
-  const [electionName, startTime, endTime, totalVotes, maxVotesPerVoter] = await Promise.all([
-    contract.methods.electionName().call(),
-    contract.methods.startTime().call(),
-    contract.methods.endTime().call(),
-    contract.methods.totalVotes().call(),
-    contract.methods.maxVotesPerVoter().call(),
-  ])
+  const [electionName, startTime, endTime, totalVotes, maxVotesPerVoter, started] =
+    await Promise.all([
+      contract.methods.electionName().call(),
+      contract.methods.startTime().call(),
+      contract.methods.endTime().call(),
+      contract.methods.totalVotes().call(),
+      contract.methods.maxVotesPerVoter().call(),
+      contract.methods.started().call(),
+    ])
 
   return {
     electionName,
@@ -47,6 +48,7 @@ export const getContractInfo = async () => {
     endTime: parseInt(endTime),
     totalVotes: parseInt(totalVotes),
     maxVotesPerVoter: parseInt(maxVotesPerVoter),
+    started: Boolean(started),
   }
 }
 
@@ -141,4 +143,62 @@ export const restartElection = async (fromAddress: string) => {
   }
 
   return await contract.methods.restart().send(options)
+}
+
+// New contract functions for the updated smart contract
+export const startElection = async (fromAddress: string) => {
+  if (!contract) throw new Error('Contract not initialized')
+
+  const options: TransactionOptions = {
+    from: fromAddress,
+  }
+
+  return await contract.methods.start().send(options)
+}
+
+export const addMultipleCandidates = async (names: string[], fromAddress: string) => {
+  if (!contract) throw new Error('Contract not initialized')
+
+  const options: TransactionOptions = {
+    from: fromAddress,
+  }
+
+  return await contract.methods.addMultipleCandidates(names).send(options)
+}
+
+export const removeCandidate = async (candidateId: number, fromAddress: string) => {
+  if (!contract) throw new Error('Contract not initialized')
+
+  const options: TransactionOptions = {
+    from: fromAddress,
+  }
+
+  return await contract.methods.removeCandidate(candidateId).send(options)
+}
+
+export const voteMultiple = async (candidateIds: number[], fromAddress: string) => {
+  if (!contract) throw new Error('Contract not initialized')
+
+  const options: TransactionOptions = {
+    from: fromAddress,
+  }
+
+  return await contract.methods.voteMultiple(candidateIds).send(options)
+}
+
+export const changeVote = async (oldId: number, newId: number, fromAddress: string) => {
+  if (!contract) throw new Error('Contract not initialized')
+
+  const options: TransactionOptions = {
+    from: fromAddress,
+  }
+
+  return await contract.methods.changeVote(oldId, newId).send(options)
+}
+
+// Check if user has voted for a specific candidate
+export const hasVotedFor = async (voterAddress: string, candidateId: number) => {
+  if (!contract) throw new Error('Contract not initialized')
+
+  return await contract.methods.voterVotes(voterAddress, candidateId).call()
 }

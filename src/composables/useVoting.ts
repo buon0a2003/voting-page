@@ -24,6 +24,7 @@ export interface ContractInfo {
   endTime: number
   totalVotes: number
   maxVotesPerVoter: number
+  started: boolean
 }
 
 export interface VoterInfo {
@@ -40,6 +41,7 @@ const contractInfo = ref<ContractInfo>({
   endTime: 0,
   totalVotes: 0,
   maxVotesPerVoter: 0,
+  started: false,
 })
 const voterInfo = ref<VoterInfo>({
   authorized: false,
@@ -51,6 +53,8 @@ const isLoading = ref(false)
 const error = ref<string | null>(null)
 const isAdmin = ref(false)
 const adminAddress = ref('')
+const selectedCandidates = ref<Set<number>>(new Set())
+const userVotes = ref<Set<number>>(new Set())
 
 // Initialize notifications
 const { success, error: showError, info, warning } = useNotifications()
@@ -63,8 +67,33 @@ const shortAddress = computed(() => {
 
 const canVote = computed(() => {
   return (
-    voterInfo.value.authorized && voterInfo.value.votesCast < contractInfo.value.maxVotesPerVoter
+    contractInfo.value.started &&
+    voterInfo.value.authorized &&
+    voterInfo.value.votesCast < contractInfo.value.maxVotesPerVoter
   )
+})
+
+const electionStatus = computed(() => {
+  if (!contractInfo.value.started) return 'not_started'
+
+  const now = Math.floor(Date.now() / 1000)
+  if (contractInfo.value.endTime > 0 && now > contractInfo.value.endTime) {
+    return 'ended'
+  }
+
+  return 'active'
+})
+
+const canManageCandidates = computed(() => {
+  return isCurrentUserAdmin.value && !contractInfo.value.started
+})
+
+const remainingVotes = computed(() => {
+  return contractInfo.value.maxVotesPerVoter - voterInfo.value.votesCast
+})
+
+const canSelectMore = computed(() => {
+  return selectedCandidates.value.size < remainingVotes.value
 })
 
 const isCurrentUserAdmin = computed(() => {
@@ -87,6 +116,11 @@ const connect = async () => {
     // Load initial data
     await Promise.all([loadContractInfo(), loadVoterInfo(), loadCandidates(), loadAdminInfo()])
 
+    // Load user votes after candidates are loaded
+    if (candidates.value.length > 0) {
+      await loadUserVotes()
+    }
+
     console.log('Đã kết nối tới MetaMask:', currentAccount.value)
     success('Kết nối thành công', 'Ví MetaMask đã được kết nối')
   } catch (err: unknown) {
@@ -108,6 +142,7 @@ const disconnect = () => {
     endTime: 0,
     totalVotes: 0,
     maxVotesPerVoter: 0,
+    started: false,
   }
   voterInfo.value = {
     authorized: false,
@@ -118,6 +153,8 @@ const disconnect = () => {
   error.value = null
   isAdmin.value = false
   adminAddress.value = ''
+  selectedCandidates.value.clear()
+  userVotes.value.clear()
 
   // Remove listeners
   metamaskAPI.removeListeners()
@@ -180,7 +217,7 @@ const castVote = async (candidateId: number) => {
 
     if (result.status) {
       success('Đã bỏ phiếu', 'Phiếu bầu của bạn đã được ghi nhận thành công')
-      Promise.all([loadCandidates(), loadVoterInfo(), loadContractInfo()])
+      await Promise.all([loadCandidates(), loadVoterInfo(), loadContractInfo(), loadUserVotes()])
       return
     } else {
       showError('Lỗi bỏ phiếu', 'Không thể bỏ phiếu. Vui lòng kiểm tra lại.')
@@ -206,7 +243,7 @@ const revokeVote = async (candidateId: number) => {
 
     if (result.status) {
       success('Đã hủy phiếu', 'Phiếu bầu của bạn đã được hủy thành công')
-      Promise.all([loadCandidates(), loadVoterInfo(), loadContractInfo()])
+      await Promise.all([loadCandidates(), loadVoterInfo(), loadContractInfo(), loadUserVotes()])
       return
     } else {
       showError('Lỗi hủy phiếu', 'Không thể hủy phiếu. Vui lòng kiểm tra lại.')
@@ -346,6 +383,131 @@ const formatTime = (timestamp: number) => {
   return new Date(timestamp * 1000).toLocaleString('vi-VN')
 }
 
+// New functions for updated smart contract
+const startElection = async () => {
+  if (!currentAccount.value) return
+
+  try {
+    isLoading.value = true
+    error.value = null
+
+    const result = await contractAPI.startElection(currentAccount.value)
+
+    if (result.status) {
+      success('Đã bắt đầu bầu cử', 'Cuộc bầu cử đã được bắt đầu thành công')
+      await loadContractInfo()
+    }
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Error starting election:', web3Error)
+    error.value = 'Không thể bắt đầu cuộc bầu cử. Hãy đảm bảo bạn là quản trị viên.'
+    showError(
+      'Bắt đầu bầu cử thất bại',
+      'Không thể bắt đầu cuộc bầu cử. Hãy đảm bảo bạn là quản trị viên.',
+    )
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const addMultipleCandidates = async (names: string[]) => {
+  if (!currentAccount.value) return
+
+  try {
+    isLoading.value = true
+    error.value = null
+
+    const result = await contractAPI.addMultipleCandidates(names, currentAccount.value)
+
+    if (result.status) {
+      success('Đã thêm ứng viên', `Đã thêm ${names.length} ứng viên thành công`)
+      await loadCandidates()
+    }
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Error adding multiple candidates:', web3Error)
+    error.value = 'Không thể thêm ứng viên. Hãy đảm bảo bạn là quản trị viên.'
+    showError(
+      'Thêm ứng viên thất bại',
+      'Không thể thêm ứng viên. Hãy đảm bảo bạn là quản trị viên.',
+    )
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const removeCandidate = async (candidateId: number) => {
+  if (!currentAccount.value) return
+
+  try {
+    isLoading.value = true
+    error.value = null
+
+    const result = await contractAPI.removeCandidate(candidateId, currentAccount.value)
+
+    if (result.status) {
+      success('Đã xóa ứng viên', 'Ứng viên đã được xóa thành công')
+      await loadCandidates()
+    }
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Error removing candidate:', web3Error)
+    error.value = 'Không thể xóa ứng viên. Hãy đảm bảo bạn là quản trị viên.'
+    showError('Xóa ứng viên thất bại', 'Không thể xóa ứng viên. Hãy đảm bảo bạn là quản trị viên.')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const voteMultiple = async () => {
+  if (!currentAccount.value || selectedCandidates.value.size === 0) return
+
+  try {
+    isLoading.value = true
+    error.value = null
+
+    const candidateIds = Array.from(selectedCandidates.value)
+    const result = await contractAPI.voteMultiple(candidateIds, currentAccount.value)
+
+    if (result.status) {
+      success('Đã bỏ phiếu', `Đã bỏ phiếu cho ${candidateIds.length} ứng viên thành công`)
+      selectedCandidates.value.clear()
+      await Promise.all([loadCandidates(), loadVoterInfo(), loadContractInfo(), loadUserVotes()])
+    }
+  } catch (err: unknown) {
+    const web3Error = err as Web3Error
+    console.error('Error voting multiple:', web3Error)
+    error.value = 'Không thể bỏ phiếu. Vui lòng kiểm tra lại.'
+    showError('Bỏ phiếu thất bại', 'Không thể bỏ phiếu. Vui lòng kiểm tra lại.')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const toggleCandidateSelection = (candidateId: number) => {
+  if (selectedCandidates.value.has(candidateId)) {
+    selectedCandidates.value.delete(candidateId)
+  } else if (canSelectMore.value) {
+    selectedCandidates.value.add(candidateId)
+  }
+}
+
+const loadUserVotes = async () => {
+  if (!currentAccount.value) return
+
+  try {
+    userVotes.value.clear()
+    for (const candidate of candidates.value) {
+      const hasVoted = await contractAPI.hasVotedFor(currentAccount.value, candidate.id)
+      if (hasVoted) {
+        userVotes.value.add(candidate.id)
+      }
+    }
+  } catch (err: unknown) {
+    console.error('Error loading user votes:', err)
+  }
+}
+
 // Setup listeners
 const setupListeners = () => {
   metamaskAPI.setupAccountListener((accounts: string[]) => {
@@ -374,11 +536,17 @@ export function useVoting() {
     error,
     isAdmin,
     adminAddress,
+    selectedCandidates,
+    userVotes,
 
     // Computed
     shortAddress,
     canVote,
     isCurrentUserAdmin,
+    electionStatus,
+    canManageCandidates,
+    remainingVotes,
+    canSelectMore,
 
     // Methods
     connect,
@@ -395,5 +563,12 @@ export function useVoting() {
     restartElection,
     formatTime,
     setupListeners,
+    // New methods
+    startElection,
+    addMultipleCandidates,
+    removeCandidate,
+    voteMultiple,
+    toggleCandidateSelection,
+    loadUserVotes,
   }
 }

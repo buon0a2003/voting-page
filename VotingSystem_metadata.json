@@ -53,6 +53,12 @@
 			},
 			{
 				"anonymous": false,
+				"inputs": [],
+				"name": "ElectionStarted",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
 				"inputs": [
 					{
 						"indexed": true,
@@ -98,6 +104,19 @@
 					}
 				],
 				"name": "addCandidate",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string[]",
+						"name": "_names",
+						"type": "string[]"
+					}
+				],
+				"name": "addMultipleCandidates",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -310,6 +329,19 @@
 				"type": "function"
 			},
 			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_candidateId",
+						"type": "uint256"
+					}
+				],
+				"name": "removeCandidate",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
 				"inputs": [],
 				"name": "restart",
 				"outputs": [],
@@ -331,12 +363,32 @@
 			},
 			{
 				"inputs": [],
+				"name": "start",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
 				"name": "startTime",
 				"outputs": [
 					{
 						"internalType": "uint256",
 						"name": "",
 						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "started",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
 					}
 				],
 				"stateMutability": "view",
@@ -366,6 +418,38 @@
 				"name": "vote",
 				"outputs": [],
 				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256[]",
+						"name": "_candidateIds",
+						"type": "uint256[]"
+					}
+				],
+				"name": "voteMultiple",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "voterAddresses",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
 				"type": "function"
 			},
 			{
@@ -445,11 +529,11 @@
 	},
 	"sources": {
 		"contracts/test.sol": {
-			"keccak256": "0x15a9afed6c102bee72c12fdacbf36c36dfc2faa805ae4e591743a34fe349dc25",
+			"keccak256": "0x4ce106ecd37e1c70f42789a5e4083a0989c73596ce7dc8199fb8528bc38b173d",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://9ab7db588031ed8d89524fe563267b0bef1071e01c59347e5860e8581cc8e5c7",
-				"dweb:/ipfs/QmRCYMobifd1dSCGduPdNRPxQkUYBFetTRDNLPiCVjrkVr"
+				"bzz-raw://0934dd558f1d61cb06fe74f7d4388f1780174536b495deca8cc6d2d1856348a7",
+				"dweb:/ipfs/QmXyQUmqAzDHMXYMkUJpFhDJFWtWj7SF1bwEmSED4hPwPK"
 			]
 		}
 	},
