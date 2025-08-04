@@ -8,6 +8,7 @@ import './assets/style.css'
     style="min-height: 100vh; display: flex; justify-content: center; align-items: center"
   >
     <h1>Hello World</h1>
+    <router-view />
   </div>
 </template>
 
