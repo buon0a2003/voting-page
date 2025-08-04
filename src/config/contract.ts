@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Contract configuration
+
 export const CONTRACT_CONFIG = {
-  ADDRESS: process.env.CONTRACT_ADDRESS,
+  ADDRESS: import.meta.env.VITE_CONTRACT_ADDRESS || '',
 
   NETWORK: {
     chainId: '0xaa36a7',
