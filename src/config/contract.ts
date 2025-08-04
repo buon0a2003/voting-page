@@ -2,7 +2,7 @@
 // Contract configuration
 
 export const CONTRACT_CONFIG = {
-  ADDRESS: import.meta.env.VITE_CONTRACT_ADDRESS || '',
+  ADDRESS: '0x079daeCf66444C6E07ceF89AC4f265e93230E688',
 
   NETWORK: {
     chainId: '0xaa36a7',
