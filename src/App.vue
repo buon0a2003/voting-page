@@ -3,7 +3,12 @@ import './assets/style.css'
 </script>
 
 <template>
-  <router-view />
+  <div
+    class="container"
+    style="min-height: 100vh; display: flex; justify-content: center; align-items: center"
+  >
+    <h1>Hello World</h1>
+  </div>
 </template>
 
 <style scoped></style>
