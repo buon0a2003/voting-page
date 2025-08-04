@@ -1,10 +1,8 @@
 import { checkNetwork, switchToSepolia } from '../config/contract'
 
-// MetaMask connection functions
 export const connectToMetaMask = async (): Promise<string> => {
   if (typeof window.ethereum !== 'undefined') {
     try {
-      // Check if we're on the correct network
       const isCorrectNetwork = await checkNetwork()
       if (!isCorrectNetwork) {
         const switched = await switchToSepolia()
@@ -13,7 +11,6 @@ export const connectToMetaMask = async (): Promise<string> => {
         }
       }
 
-      // Request account access
       const accounts = (await window.ethereum.request({
         method: 'eth_requestAccounts',
       })) as string[]
@@ -34,12 +31,10 @@ export const connectToMetaMask = async (): Promise<string> => {
   }
 }
 
-// Check if MetaMask is available
 export const isMetaMaskAvailable = (): boolean => {
   return typeof window.ethereum !== 'undefined'
 }
 
-// Get current account
 export const getCurrentAccount = async (): Promise<string | null> => {
   if (typeof window.ethereum !== 'undefined') {
     const accounts = (await window.ethereum.request({ method: 'eth_accounts' })) as string[]
@@ -48,21 +43,18 @@ export const getCurrentAccount = async (): Promise<string | null> => {
   return null
 }
 
-// Listen for account changes
 export const setupAccountListener = (callback: (accounts: string[]) => void): void => {
   if (typeof window.ethereum !== 'undefined') {
     window.ethereum.on('accountsChanged', callback)
   }
 }
 
-// Listen for chain changes
 export const setupChainListener = (callback: (chainId: string) => void): void => {
   if (typeof window.ethereum !== 'undefined') {
     window.ethereum.on('chainChanged', callback)
   }
 }
 
-// Remove listeners
 export const removeListeners = (): void => {
   if (typeof window.ethereum !== 'undefined') {
     window.ethereum.removeAllListeners('accountsChanged')

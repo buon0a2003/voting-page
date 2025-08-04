@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Contract configuration
 export const CONTRACT_CONFIG = {
-  ADDRESS: '0x079daeCf66444C6E07ceF89AC4f265e93230E688',
+  ADDRESS: process.env.CONTRACT_ADDRESS,
 
   NETWORK: {
     chainId: '0xaa36a7',

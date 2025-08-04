@@ -355,7 +355,7 @@
                   <hr />
                 </div>
 
-                <!-- Authorize Voter - Always available for admin -->
+                <!-- Authorize Voter -->
                 <div class="field">
                   <label class="label">Ủy Quyền Cử Tri</label>
                   <div class="control">
@@ -381,7 +381,7 @@
 
                 <hr />
 
-                <!-- Election Control - Only show when election is active -->
+                <!-- Election Control -->
                 <div v-if="electionStatus === 'active'">
                   <button
                     class="button is-danger is-fullwidth"
@@ -399,7 +399,7 @@
                   <hr />
                 </div>
 
-                <!-- Restart Election - Only show when election is ended -->
+                <!-- Restart Election-->
                 <div v-if="electionStatus === 'ended'">
                   <button
                     class="button is-warning is-fullwidth"
@@ -502,13 +502,11 @@ const {
   toggleCandidateSelection,
 } = useVoting()
 
-// Local reactive state for form inputs
 const newCandidateName = ref('')
 const voterAddress = ref('')
 const multipleCandidateNames = ref('')
 const selectedCandidateToRemove = ref('')
 
-// Wrapper functions for form handling
 const handleAddCandidate = async () => {
   if (newCandidateName.value.trim()) {
     await addCandidate(newCandidateName.value.trim())
@@ -544,7 +542,6 @@ const handleRemoveCandidate = async () => {
   }
 }
 
-// Setup listeners on mount
 onMounted(() => {
   setupListeners()
 })

@@ -510,13 +510,62 @@ const loadUserVotes = async () => {
 
 // Setup listeners
 const setupListeners = () => {
-  metamaskAPI.setupAccountListener((accounts: string[]) => {
+  // Account change listener
+  metamaskAPI.setupAccountListener(async (accounts: string[]) => {
     if (accounts.length === 0) {
       disconnect()
     } else {
-      currentAccount.value = accounts[0]
-      if (isConnected.value) {
-        loadVoterInfo()
+      const newAccount = accounts[0]
+      const accountChanged = currentAccount.value !== newAccount
+
+      currentAccount.value = newAccount
+
+      if (isConnected.value && accountChanged) {
+        // Clear previous user-specific data
+        selectedCandidates.value.clear()
+        userVotes.value.clear()
+        winner.value = null
+        error.value = null
+
+        // Reload all necessary data for the new account
+        try {
+          await Promise.all([loadVoterInfo(), loadAdminInfo(), loadCandidates()])
+
+          // Load user votes after candidates are loaded
+          if (candidates.value.length > 0) {
+            await loadUserVotes()
+          }
+
+          info(
+            'Tài khoản đã thay đổi',
+            `Đã chuyển sang tài khoản ${newAccount.slice(0, 6)}...${newAccount.slice(-4)}`,
+          )
+        } catch (err) {
+          console.error('Error refreshing data after account change:', err)
+          showError('Lỗi tải dữ liệu', 'Không thể tải dữ liệu cho tài khoản mới')
+        }
+      }
+    }
+  })
+
+  // Chain change listener
+  metamaskAPI.setupChainListener(async (chainId: string) => {
+    if (isConnected.value) {
+      warning('Mạng đã thay đổi', 'Vui lòng kiểm tra lại kết nối và làm mới trang nếu cần thiết')
+
+      // Optionally reload data when chain changes
+      try {
+        await Promise.all([loadContractInfo(), loadVoterInfo(), loadAdminInfo(), loadCandidates()])
+
+        if (candidates.value.length > 0) {
+          await loadUserVotes()
+        }
+      } catch (err) {
+        console.error('Error refreshing data after chain change:', err)
+        showError(
+          'Lỗi mạng',
+          'Không thể tải dữ liệu sau khi thay đổi mạng. Vui lòng làm mới trang.',
+        )
       }
     }
   })
