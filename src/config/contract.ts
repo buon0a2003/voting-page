@@ -2,7 +2,7 @@
 // Contract configuration
 
 export const CONTRACT_CONFIG = {
-  ADDRESS: '0x079daeCf66444C6E07ceF89AC4f265e93230E688',
+  ADDRESS: '0x8f45329a73401C6e7f480F0543F4F0d2959641C5',
 
   NETWORK: {
     chainId: '0xaa36a7',
